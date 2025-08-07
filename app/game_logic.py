@@ -48,4 +48,3 @@ class TicTacToeBoard:
         Zwraca aktualny stan planszy.
         """
         return self.board
-
