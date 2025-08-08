@@ -48,3 +48,15 @@ class TicTacToeBoard:
         Zwraca aktualny stan planszy.
         """
         return self.board
+    
+    def get_display(self) -> str:
+        """
+        Zwraca wizualną reprezentację planszy jako string.
+        """
+        display = ""
+        for i, row in enumerate(self.board):
+            row_display = " | ".join(cell if cell is not None else " " for cell in row)
+            display += row_display + "\n"
+            if i < 2:
+                display += "---------\n"
+        return display    

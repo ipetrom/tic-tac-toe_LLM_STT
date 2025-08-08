@@ -18,14 +18,6 @@ winner = board1.check_winner()
 #board1.reset()
 #print(board1.get_state())
 
-def print_board(board):
-    """
-    Wyświetla planszę w ładny sposób.
-    """
-    for row in board:
-        print(" | ".join(cell if cell is not None else " " for cell in row))
-        print("-" * 9)
-
 def main():
     game = TicTacToeBoard()
     current_player = "X"
@@ -33,7 +25,7 @@ def main():
     print("Witaj w grze Kółko-Krzyżyk!")
     
     while True:
-        print_board(game.get_state())
+        print(game.get_display())
         print(f"Ruch gracza {current_player}")
         
         try:
@@ -53,12 +45,12 @@ def main():
 
         winner = game.check_winner()
         if winner:
-            print_board(game.get_state())
+            print(game.get_display())
             print(f"Gracz {winner} wygrał! 🎉")
             break
 
         if game.is_full():
-            print_board(game.get_state())
+            print(game.get_display())
             print("Remis! 🟰")
             break
 

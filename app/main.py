@@ -16,6 +16,7 @@ class MoveResponse(BaseModel):
     success: bool
     message: str
     board: list[list[Optional[str]]]
+    board_display: str
     winner: Optional[str] = None
     is_full: bool = False
 
@@ -26,6 +27,7 @@ def get_board_state():
         success=True,
         message="Current board state.",
         board=board.get_state(),
+        board_display=board.get_display(),
         winner=winner,
         is_full=board.is_full()
     )
@@ -42,6 +44,7 @@ def make_move(move: MoveRequest):
             success=False,
             message=f"Game over! Winner: {board.check_winner()}",
             board=board.get_state(),
+            board_display=board.get_display(),
             winner=board.check_winner(),
             is_full=board.is_full()
         )
@@ -57,6 +60,7 @@ def make_move(move: MoveRequest):
             success=True,
             message=msg,
             board=board.get_state(),
+            board_display=board.get_display(),
             winner=winner,
             is_full=board.is_full()
         )
@@ -65,6 +69,7 @@ def make_move(move: MoveRequest):
             success=False,
             message="Invalid move: cell already occupied.",
             board=board.get_state(),
+            board_display=board.get_display(),
             winner=board.check_winner(),
             is_full=board.is_full()
         )
