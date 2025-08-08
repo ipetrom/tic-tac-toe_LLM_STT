@@ -3,6 +3,9 @@ import re
 from typing import Optional, Literal, Dict, List
 
 from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 Player = Literal["X", "O"]
 
@@ -126,3 +129,4 @@ def llm_parse_move_with_board(
     if board[row][col] in ("X", "O"):
         raise ValueError("Cell is already occupied according to provided board.")
     return {"player": player, "row": row, "col": col}
+
