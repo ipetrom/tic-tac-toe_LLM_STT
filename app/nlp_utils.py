@@ -1,7 +1,7 @@
 import json
 import re
 from typing import Optional, Literal, Dict, List, Any
-from app.game_logic import TicTacToeBoard
+from game_logic import TicTacToeBoard
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -20,7 +20,6 @@ def _extract_json(content: str) -> dict:
 
 def llm_parse_move(
     text: str,
-    default_player: Optional[Player] = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.2,
 ) -> Dict[str, int | str]:
@@ -39,7 +38,6 @@ def llm_parse_move(
 
     user_msg = (
         f"User command (PL): {text}\n"
-        f"Default player: {default_player if default_player else 'NONE'}\n\n"
         "Return ONLY JSON like: {\"player\":\"X or O\",\"row\":0..2,\"col\":0..2}"
     )
 
@@ -72,9 +70,8 @@ def llm_parse_move(
 def apply_move_from_text(
     board: TicTacToeBoard,
     text: str,
-    default_player: Optional[Player] = None,
     model: str = "gpt-4o-mini",
-    temperature: float = 0.0,
+    temperature: float = 0.2,
 ) -> Dict[str, Any]:
     """
     Orkiestracja LLM -> walidacja -> wykonanie ruchu.
@@ -86,7 +83,6 @@ def apply_move_from_text(
     # 1) Parsowanie komendy przez LLM
     move = llm_parse_move(
         text=text,
-        default_player=default_player,
         model=model,
         temperature=temperature,
     )
@@ -101,6 +97,7 @@ def apply_move_from_text(
             "success": False,
             "message": "This cell is already occupied.",
             "board": board.get_state(),
+            "board_display": board.get_display(),
             "winner": board.check_winner(),
             "is_full": board.is_full(),
             "move": move,
@@ -114,6 +111,7 @@ def apply_move_from_text(
             "success": False,
             "message": "Move was not executed (unknown error).",
             "board": board.get_state(),
+            "board_display": board.get_display(),
             "winner": board.check_winner(),
             "is_full": board.is_full(),
             "move": move,
@@ -134,6 +132,7 @@ def apply_move_from_text(
         "success": True,
         "message": msg,
         "board": board.get_state(),
+        "board_display": board.get_display(),
         "winner": winner,
         "is_full": is_full,
         "move": move,

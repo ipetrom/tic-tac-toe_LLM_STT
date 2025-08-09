@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Dict, Any
 
-from app.game_logic import TicTacToeBoard
-from app.nlp_utils import llm_parse_move, apply_move_from_text
+from game_logic import TicTacToeBoard
+from nlp_utils import llm_parse_move, apply_move_from_text
 
 app = FastAPI()
 board = TicTacToeBoard()
@@ -24,9 +24,8 @@ class MoveResponse(BaseModel):
 
 class TextCommand(BaseModel):
     text: str = Field(..., description="Write a command to play a move, e.g., 'X plays at row 1, column 2'")
-    default_player: Optional[Literal["X", "O"]] = Field(None, description="Default player if not specified in command")
     model: Optional[str] = Field("gpt-4o-mini", description="OpenAI model to use for parsing")
-    temperature: float = Field(0.0, ge=0.0, le=1.0, description="Temperature for LLM")
+    temperature: float = Field(0.2, ge=0.0, le=1.0, description="Temperature for LLM")
 
 class ParsedMove(BaseModel):
     player: Literal["X", "O"]
@@ -56,7 +55,6 @@ def move_from_text(cmd: TextCommand):
         result = apply_move_from_text(
             board=board,
             text=cmd.text,
-            default_player=cmd.default_player,
             model=cmd.model or "gpt-4o-mini",
             temperature=cmd.temperature,
         )
