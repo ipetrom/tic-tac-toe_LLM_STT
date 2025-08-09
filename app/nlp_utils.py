@@ -1,6 +1,7 @@
 import json
 import re
-from typing import Optional, Literal, Dict, List
+from typing import Optional, Literal, Dict, List, Any
+from app.game_logic import TicTacToeBoard
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -68,65 +69,72 @@ def llm_parse_move(
         raise ValueError("Row/col out of range. Expected 0..2.")
     return {"player": player, "row": row, "col": col}
 
-def llm_parse_move_with_board(
+def apply_move_from_text(
+    board: TicTacToeBoard,
     text: str,
-    board: List[List[Optional[str]]],
     default_player: Optional[Player] = None,
     model: str = "gpt-4o-mini",
-    temperature: float = 0.2,
-) -> Dict[str, int | str]:
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
     """
-    Wersja LLM-only z kontekstem bieżącej planszy.
-    Model dostaje stan gry i ma zwrócić legalny ruch w formacie JSON.
-    Nie dodajemy żadnych heurystyk – jeśli JSON jest zły lub ruch nielegalny,
-    funkcja rzuca ValueError (walidacja minimalna: format i zakres).
+    Orkiestracja LLM -> walidacja -> wykonanie ruchu.
+    1) LLM parsuje tekst na {player,row,col}
+    2) Sprawdzamy, czy pole jest wolne
+    3) Jeśli tak, wykonujemy ruch i liczymy wynik gry
+    Zwraca dict spójny z logiką API (success/message/board/winner/is_full/move).
     """
-    client = OpenAI()
-
-    # Serializacja planszy do prostego formatu – None -> ".", X/O bez zmian
-    serial_board = [[(cell if cell in ("X", "O") else ".") for cell in row] for row in board]
-
-    system_msg = (
-        "You are a strict JSON command parser and controller for Tic-Tac-Toe. "
-        "Given the current 3x3 board ('.' means empty, 'X'/'O' are occupied), "
-        "and a user instruction, return ONLY a valid JSON object with keys: player,row,col. "
-        "Rules: indexes are 0..2; the target cell must be empty; player must be 'X' or 'O'. "
-        "No explanations, no markdown, only the JSON object."
-    )
-
-    user_msg = (
-        f"Board (3 rows, 0-based indices):\n{serial_board}\n\n"
-        f"User command (PL): {text}\n"
-        f"Default player: {default_player if default_player else 'NONE'}\n\n"
-        "Return ONLY JSON like: {\"player\":\"X or O\",\"row\":0..2,\"col\":0..2}"
-    )
-
-    resp = client.chat.completions.create(
+    # 1) Parsowanie komendy przez LLM
+    move = llm_parse_move(
+        text=text,
+        default_player=default_player,
         model=model,
         temperature=temperature,
-        messages=[
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": user_msg},
-        ],
     )
-    content = resp.choices[0].message.content if resp.choices else ""
-    if not content:
-        raise ValueError("LLM did not return content.")
+    player = move["player"]
+    row = int(move["row"])
+    col = int(move["col"])
 
-    data = _extract_json(content)
+    # 2) Walidacja zajętości pola
+    current_cell = board.get_state()[row][col]
+    if current_cell in ("X", "O"):
+        return {
+            "success": False,
+            "message": "This cell is already occupied.",
+            "board": board.get_state(),
+            "winner": board.check_winner(),
+            "is_full": board.is_full(),
+            "move": move,
+        }
 
-    # Minimalna walidacja formatowa (bez heurystyk wyboru)
-    player = data.get("player")
-    row = data.get("row")
-    col = data.get("col")
-    if player not in ("X", "O"):
-        raise ValueError("Invalid 'player' from LLM. Expected 'X' or 'O'.")
-    if not isinstance(row, int) or not isinstance(col, int):
-        raise ValueError("Invalid 'row'/'col' types from LLM. Expected integers.")
-    if not (0 <= row <= 2 and 0 <= col <= 2):
-        raise ValueError("Row/col out of range. Expected 0..2.")
-    # Sprawdź zajętość pola – to nadal walidacja formalna (legalność ruchu)
-    if board[row][col] in ("X", "O"):
-        raise ValueError("Cell is already occupied according to provided board.")
-    return {"player": player, "row": row, "col": col}
+    # 3) Wykonanie ruchu
+    placed = board.make_move(player, row, col)
+    if not placed:
+        # Teoretycznie nie powinniśmy tutaj trafić, ale zostawmy bezpiecznik
+        return {
+            "success": False,
+            "message": "Move was not executed (unknown error).",
+            "board": board.get_state(),
+            "winner": board.check_winner(),
+            "is_full": board.is_full(),
+            "move": move,
+        }
 
+    # 4) Wyliczenie stanu gry po ruchu
+    winner = board.check_winner()
+    is_full = board.is_full()
+
+    if winner:
+        msg = f"Player {winner} wins!"
+    elif is_full:
+        msg = "Draw – board is full."
+    else:
+        msg = "Move executed."
+
+    return {
+        "success": True,
+        "message": msg,
+        "board": board.get_state(),
+        "winner": winner,
+        "is_full": is_full,
+        "move": move,
+    }
