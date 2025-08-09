@@ -14,7 +14,10 @@ if st.button("Wykonaj ruch"):
     st.session_state.last_result = result
 
 if "last_result" in st.session_state:
-    st.markdown(f"**Komunikat:** {st.session_state.last_result['message']}")
+    st.markdown(
+        f"<b>Komunikat:</b> <span style='color:#fff09c'>{st.session_state.last_result['message']}</span>",
+        unsafe_allow_html=True
+    )
     st.markdown("**Stan planszy:**")
     board_display = st.session_state.last_result["board_display"]
     st.markdown(f"```\n{board_display}\n```")
