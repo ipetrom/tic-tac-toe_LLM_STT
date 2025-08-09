@@ -2,7 +2,7 @@ import streamlit as st
 from game_logic import TicTacToeBoard
 from nlp_utils import apply_move_from_text
 
-st.title("Tic-Tac-Toe LLM Controller")
+st.title("Tic-Tac-Toe LLM Controller 🎮🤖")
 
 if "board" not in st.session_state:
     st.session_state.board = TicTacToeBoard()
