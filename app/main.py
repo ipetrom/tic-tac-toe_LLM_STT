@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Dict, Any
 
-from game_logic import TicTacToeBoard
-from nlp_utils import llm_parse_move, apply_move_from_text
+from app.game_logic import TicTacToeBoard
+from app.nlp_utils import llm_parse_move, apply_move_from_text
+from app.stt import transcribe_filelike, STTError, DEFAULT_STT_MODEL, DEFAULT_PROMPT
 
 app = FastAPI()
 board = TicTacToeBoard()
@@ -69,4 +72,45 @@ def reset_board():
     board.reset()
     return {"message": "Board reset."}
 
-    
+
+# ---------- Audio stuff ----------
+
+class STTResponse(BaseModel):
+    transcript: str
+    model: str
+
+ALLOWED_AUDIO_MIME = {
+    "audio/mpeg", "audio/mp3",
+    "audio/wav", "audio/x-wav",
+    "audio/webm",
+    "audio/mp4", "audio/m4a",
+    "audio/aac", "audio/ogg",
+    "application/octet-stream",  # bywa dla niektórych przeglądarek
+}
+
+@app.post("/stt/transcribe", response_model=STTResponse)
+async def stt_transcribe(
+    file: UploadFile = File(..., description="Plik audio z poleceniem ruchu"),
+    model: str = DEFAULT_STT_MODEL,
+    prompt: Optional[str] = DEFAULT_PROMPT,
+):
+    # Prosta walidacja typu pliku
+    if file.content_type not in ALLOWED_AUDIO_MIME:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Nieobsługiwany typ pliku: {file.content_type}. Wgraj mp3/m4a/wav/webm.",
+        )
+
+    try:
+        transcript = transcribe_filelike(
+            file_obj=file.file,
+            filename=file.filename or "audio_input",
+            model=model,
+            prompt=prompt,
+        )
+    except STTError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    return STTResponse(transcript=transcript, model=model)
+
+

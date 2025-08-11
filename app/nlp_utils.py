@@ -1,7 +1,7 @@
 import json
 import re
 from typing import Optional, Literal, Dict, List, Any
-from game_logic import TicTacToeBoard
+from app.game_logic import TicTacToeBoard
 
 from openai import OpenAI
 from dotenv import load_dotenv

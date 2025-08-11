@@ -1,6 +1,6 @@
 import streamlit as st
-from game_logic import TicTacToeBoard
-from nlp_utils import apply_move_from_text
+from app.game_logic import TicTacToeBoard
+from app.nlp_utils import apply_move_from_text
 
 st.title("Tic-Tac-Toe LLM Controller 🎮🤖")
 
