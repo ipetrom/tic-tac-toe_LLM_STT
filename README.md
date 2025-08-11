@@ -1,12 +1,12 @@
 # Voice-Controlled Tic-Tac-Toe (LLM + STT) 🎮
 
-An educational project built as a springboard for a future commercial deployment with a similar concept and tech stack.
+Built for learning, this prototype previews the concept and stack we’ll carry into a commercial project — just in a different business problem.
 
 ## Repository Branches
 
 This repo contains three branches representing implementation stages. The final version lives in: `final-version`.
 
-Example progression: `base-version` → `second-version` → `final-version`.
+Example progression: `first-version` → `second-version` → `final-version`.
 
 ## Concept 💡
 
@@ -29,7 +29,7 @@ An interactive Tic-Tac-Toe game controlled by voice commands. User commands are:
 
 ## How It Works (Flow) ⚙️
 
-1. The user records or uploads an audio file with a command (e.g., “X top-left corner”).
+1. The user uploads an audio file with a command (e.g., “X top-left corner”).
 2. The STT model transcribes the audio and fills the text field.
 3. The user can optionally edit the text and confirm.
 4. The LLM parses the command into a move (position, symbol).
@@ -40,9 +40,9 @@ An interactive Tic-Tac-Toe game controlled by voice commands. User commands are:
    - continue.
 6. A board reset is available to start a new game.
 
-## Demo
+## Demo 📸
 
-Add a link here to a short screen recording that shows the app in action.
+https://github.com/user-attachments/assets/a350a392-1971-4590-aecd-b07e4dd351db
 
 ## Tech Stack
 
